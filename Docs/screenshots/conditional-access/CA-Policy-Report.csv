@@ -1,0 +1,8 @@
+"PolicyName","State","CreatedDate","ModifiedDate","Id"
+"KAG-CA-001 Require MFA for All Users","Report Only","7/7/2026 4:26:22 pm",,"16d121a0-c964-488e-9354-46da1e7dcea8"
+"Require multifactor authentication for admins","Enabled","7/7/2026 5:20:25 pm",,"05ab23f1-fcdb-4c69-a8d1-b3d8764a5bae"
+"Block legacy authentication","Enabled","7/7/2026 5:20:29 pm",,"24846d30-21ba-42f5-86d4-e25764597ea8"
+"Require multifactor authentication for all users","Enabled","7/7/2026 5:20:32 pm",,"52ae6bd2-dc6d-4444-9ec2-75cf0907e29c"
+"Require multifactor authentication for Azure management","Enabled","7/7/2026 5:20:35 pm",,"aeec582a-cb95-4300-8ad6-f776bf4d279e"
+"KAG-CA-002 Block Legacy Authentication","Report Only","8/7/2026 6:24:28 am",,"83929fc7-a6d7-4175-824e-760d3e6967f0"
+"KAG-CA-003 Require Compliant Device","Report Only","8/7/2026 7:29:22 am",,"386d1f36-173c-411f-a8df-e444ad031623"

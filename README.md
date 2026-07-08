@@ -68,7 +68,7 @@ cd ~/Documents/KAGSecOps/dashboard
 npm start
 ```
 
-Requires a `.env` file with `TENANT_ID`, `CLIENT_ID`, and `CLIENT_SECRET` for an Azure AD app registration with `User.Read.All`, `AuditLog.Read.All`, `DeviceManagementManagedDevices.Read.All`, `ServiceHealth.Read.All`, and `UserAuthenticationMethod.Read.All` application permissions.
+Requires a `.env` file with `TENANT_ID`, `CLIENT_ID`, and `CLIENT_SECRET` for an Azure AD app registration with `User.Read.All`, `AuditLog.Read.All`, `DeviceManagementManagedDevices.Read.All`, `ServiceHealth.Read.All`, `UserAuthenticationMethod.Read.All`, and `Policy.Read.All` application permissions.
 
 ## Screenshots
 
@@ -117,6 +117,42 @@ The PowerShell automation, Graph API queries, FastAPI backend, and the overall s
 - Cross-referencing two datasets (MFA status × inactivity) surfaces risk that neither report shows alone, and is a better security signal than either metric individually
 - Admin/service accounts frequently lack a Department attribute in Entra ID — worth handling explicitly (an "Unassigned" bucket) rather than letting those users silently disappear from department-level views
 - A dashboard's numbers need to always be traceable to the underlying record; a percentage or count with no drill-down is a dead end for anyone actually trying to act on it
+
+## Conditional Access Lab
+
+As a natural extension of the dashboard — which surfaces MFA gaps and inactive accounts — three Conditional Access policies were configured in the same tenant to enforce the controls the dashboard was reporting on.
+
+### Policies implemented
+
+| Policy | ID | State | Purpose |
+|--------|----|-------|---------|
+| Require MFA for All Users | KAG-CA-001 | Report only | Enforces MFA on every sign-in across all cloud apps |
+| Block Legacy Authentication | KAG-CA-002 | Report only | Blocks SMTP, IMAP, POP3, Exchange ActiveSync — protocols that bypass MFA entirely |
+| Require Compliant Device | KAG-CA-003 | Report only | Restricts access to Intune-enrolled, policy-compliant devices only |
+
+All three policies were implemented in Report only mode — meaning they log what would have been blocked without enforcing it — following Microsoft's recommended rollout approach of monitoring impact before enabling enforcement.
+
+Security defaults were disabled prior to policy creation, as Conditional Access and security defaults cannot run simultaneously in the same tenant.
+
+### CA Policy audit script
+
+`Scripts/Security/Get-CAPolicy-Report.ps1` queries all Conditional Access policies in the tenant via Microsoft Graph and exports a CSV audit report — useful for compliance documentation and change tracking.
+
+```powershell
+# Requires Policy.Read.All application permission
+Get-MgIdentityConditionalAccessPolicy
+```
+
+### Screenshots
+
+| | |
+|---|---|
+| Security defaults disabled | ![Security defaults](./Docs/screenshots/conditional-access/CA_SecurityDefaults_Disabled.png) |
+| KAG-CA-001 Require MFA — policy overview | ![CA-001](./Docs/screenshots/conditional-access/CA-001-Require-MFA/CA_001_05_PolicyOverview.png) |
+| KAG-CA-002 Block Legacy Auth — client apps condition | ![CA-002](./Docs/screenshots/conditional-access/CA-002-Block-Legacy-Auth/CA_002_04_ClientAppsCondition.png) |
+| KAG-CA-003 Require Compliant Device — grant control | ![CA-003](./Docs/screenshots/conditional-access/CA-003-Require-Compliant-Device/CA_003_04_GrantControl.png) |
+| All 3 policies visible in tenant | ![All policies](./Docs/screenshots/conditional-access/CA-002-Block-Legacy-Auth/CA_002_07_PolicyCreated.png) |
+| PowerShell CA policy audit report | ![CA audit](./Docs/screenshots/conditional-access/CA_PolicyReport_PowerShell.png) |
 
 ## Known limitations
 
