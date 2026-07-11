@@ -1,7 +1,7 @@
 "Service","Status"
 "Exchange Online","serviceOperational"
 "Microsoft Entra","serviceOperational"
-"Microsoft 365 suite","serviceOperational"
+"Microsoft 365 suite","serviceDegradation"
 "SharePoint Online","serviceDegradation"
 "Dynamics 365 Apps","serviceOperational"
 "Basic Mobility and Security","serviceOperational"

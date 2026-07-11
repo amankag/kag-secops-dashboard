@@ -68,7 +68,11 @@ cd ~/Documents/KAGSecOps/dashboard
 npm start
 ```
 
-Requires a `.env` file with `TENANT_ID`, `CLIENT_ID`, and `CLIENT_SECRET` for an Azure AD app registration with `User.Read.All`, `AuditLog.Read.All`, `DeviceManagementManagedDevices.Read.All`, `ServiceHealth.Read.All`, `UserAuthenticationMethod.Read.All`, and `Policy.Read.All` application permissions.
+Requires a `.env` file with `TENANT_ID`, `CLIENT_ID`, and `CLIENT_SECRET` for an Azure AD app registration with the following application permissions granted:
+
+`User.Read.All` · `User.ReadWrite.All` · `AuditLog.Read.All` · `DeviceManagementManagedDevices.Read.All` · `ServiceHealth.Read.All` · `UserAuthenticationMethod.Read.All` · `Policy.Read.All` · `Group.ReadWrite.All` · `Organization.Read.All` · `Mail.Send`
+
+Note: permissions were added incrementally as each feature was built — not granted all at once — following least privilege principles.
 
 ## Screenshots
 
@@ -153,6 +157,51 @@ Get-MgIdentityConditionalAccessPolicy
 | KAG-CA-003 Require Compliant Device — grant control | ![CA-003](./Docs/screenshots/conditional-access/CA-003-Require-Compliant-Device/CA_003_04_GrantControl.png) |
 | All 3 policies visible in tenant | ![All policies](./Docs/screenshots/conditional-access/CA-002-Block-Legacy-Auth/CA_002_07_PolicyCreated.png) |
 | PowerShell CA policy audit report | ![CA audit](./Docs/screenshots/conditional-access/CA_PolicyReport_PowerShell.png) |
+
+## HR Provisioning Pipeline
+
+Built as the operational complement to the dashboard and Conditional Access lab — once security policies are enforced, user lifecycle management needs to be equally automated. Two scripts handle the complete joiner/leaver process against the same tenant.
+
+### What it automates
+
+**Onboarding (`Scripts/HRProvisioning/Invoke-Onboarding.ps1`)**
+Reads a CSV of new starters and for each one:
+- Checks if the account already exists — skips duplicates gracefully
+- Creates the user in Entra ID with correct attributes
+- Assigns a Microsoft 365 Business Premium license
+- Adds to the correct department security group (IT-Staff, Finance-Staff etc)
+- Sends a formatted HTML welcome email via Microsoft Graph
+- Logs every action to a timestamped CSV audit file
+
+**Offboarding (`Scripts/HRProvisioning/Invoke-Offboarding.ps1`)**
+Reads a CSV of leavers and for each one:
+- Revokes all active sessions immediately — user is locked out instantly
+- Disables the account — blocks any further sign-in attempts
+- Removes all assigned licenses — frees them for reuse
+- Removes from all security groups
+- Logs every action to a timestamped CSV audit file
+
+### Security groups created
+
+Nine department groups were created in Entra ID to support automatic group assignment during onboarding:
+`IT-Staff` · `Finance-Staff` · `HR-Staff` · `Sales-Staff` · `Engineering-Staff` · `Operations-Staff` · `Marketing-Staff` · `Legal-Staff` · `Analytics-Staff`
+
+### Graph API permissions used
+
+`User.ReadWrite.All` · `Group.ReadWrite.All` · `Organization.Read.All` · `Mail.Send`
+
+### Screenshots
+
+| | |
+|---|---|
+| 9 department security groups created in Entra ID | ![Groups created](./Docs/screenshots/hr-provisioning/HR_001_GroupsCreated.png) |
+| Onboarding pipeline — both users created, licensed, grouped, emailed | ![Onboarding complete](./Docs/screenshots/hr-provisioning/HR_002_OnboardingComplete.png) |
+| Welcome emails delivered to manager inbox | ![Welcome emails](./Docs/screenshots/hr-provisioning/HR_003_WelcomeEmails.png) |
+| New users visible in M365 Admin Center with licenses | ![Admin center](./Docs/screenshots/hr-provisioning/HR_004_UsersInAdminCenter.png) |
+| Onboarding audit log exported to CSV | ![Onboarding log](./Docs/screenshots/hr-provisioning/HR_005_OnboardingLog.png) |
+| Offboarding pipeline — sessions revoked, accounts disabled, licenses removed | ![Offboarding complete](./Docs/screenshots/hr-provisioning/HR_008_OffboardingComplete.png) |
+| Users showing as unlicensed in Admin Center after offboarding | ![Users disabled](./Docs/screenshots/hr-provisioning/HR_009_UsersDisabled.png) |
+| Offboarding audit log exported to CSV | ![Offboarding log](./Docs/screenshots/hr-provisioning/HR_010_OffboardingLog.png) |
 
 ## Known limitations
 
