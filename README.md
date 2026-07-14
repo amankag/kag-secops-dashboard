@@ -70,7 +70,7 @@ npm start
 
 Requires a `.env` file with `TENANT_ID`, `CLIENT_ID`, and `CLIENT_SECRET` for an Azure AD app registration with the following application permissions granted:
 
-`User.Read.All` · `User.ReadWrite.All` · `AuditLog.Read.All` · `DeviceManagementManagedDevices.Read.All` · `ServiceHealth.Read.All` · `UserAuthenticationMethod.Read.All` · `Policy.Read.All` · `Group.ReadWrite.All` · `Organization.Read.All` · `Mail.Send`
+`User.Read.All` · `User.ReadWrite.All` · `AuditLog.Read.All` · `DeviceManagementManagedDevices.Read.All` · `ServiceHealth.Read.All` · `UserAuthenticationMethod.Read.All` · `Policy.Read.All` · `Group.ReadWrite.All` · `Organization.Read.All` · `Mail.Send` · `Application.Read.All` · `AppRoleAssignment.ReadWrite.All` · `Application.ReadWrite.All`
 
 Note: permissions were added incrementally as each feature was built — not granted all at once — following least privilege principles.
 
@@ -202,6 +202,45 @@ Nine department groups were created in Entra ID to support automatic group assig
 | Offboarding pipeline — sessions revoked, accounts disabled, licenses removed | ![Offboarding complete](./Docs/screenshots/hr-provisioning/HR_008_OffboardingComplete.png) |
 | Users showing as unlicensed in Admin Center after offboarding | ![Users disabled](./Docs/screenshots/hr-provisioning/HR_009_UsersDisabled.png) |
 | Offboarding audit log exported to CSV | ![Offboarding log](./Docs/screenshots/hr-provisioning/HR_010_OffboardingLog.png) |
+
+## App Consent Audit
+
+Inspired by a real-world M365 compromise where MFA was enabled but the account was still breached through a rogue OAuth app — a third party application that had been granted delegated access to Microsoft 365 data without IT awareness.
+
+Three scripts audit and remediate exactly this attack vector.
+
+### The Scenario
+
+A user clicks Accept on a third party app consent screen. That app receives ongoing delegated access to their email, files and profile. Even after a password change the app token remains valid. IT has no visibility unless they specifically audit OAuth grants.
+
+### Scripts
+
+**`Scripts/AppConsentAudit/Get-AppConsentReport.ps1`**
+Scans all 185+ service principals in the tenant and reports every app with consented delegated permissions. Exports full CSV audit report.
+
+**`Scripts/AppConsentAudit/Get-HighRiskApps.ps1`**
+Cross-references consented scopes against a high risk permission list including Mail.Read, Files.ReadWrite.All, User.Read.All and others. Rates each app as CRITICAL, HIGH or MEDIUM risk based on permission count.
+
+**`Scripts/AppConsentAudit/Revoke-AppConsent.ps1`**
+Removes a suspicious app from the tenant in three steps — revokes OAuth2 permission grants, removes app role assignments, deletes the service principal entirely. Logs the revocation action to CSV.
+
+### Simulation
+
+A fake app called Contoso PDF Converter was registered in the tenant with four suspicious delegated permissions: Files.ReadWrite.All, Mail.Read, User.Read and User.Read.All. The audit scripts detected it as CRITICAL risk and the revocation script removed it completely.
+
+### Graph API permissions used
+
+`Application.Read.All` · `AppRoleAssignment.ReadWrite.All` · `Application.ReadWrite.All`
+
+### Screenshots
+
+| | |
+|---|---|
+| Fake suspicious app registered with dangerous permissions | ![Fake app](./Docs/screenshots/app-consent-audit/AppAudit_001_FakeAppRegistered.png) |
+| Suspicious permissions granted | ![Permissions](./Docs/screenshots/app-consent-audit/AppAudit_002_SuspiciousPermissions.png) |
+| App Consent Report — suspicious app detected among 185 apps | ![Consent report](./Docs/screenshots/app-consent-audit/AppAudit_003_SuspiciousAppFound.png) |
+| High Risk Detection — Contoso PDF Converter flagged as CRITICAL | ![High risk](./Docs/screenshots/app-consent-audit/AppAudit_005_HighRiskDetected.png) |
+| Revocation complete — app removed from tenant in 3 steps | ![Revoked](./Docs/screenshots/app-consent-audit/AppAudit_006_AppRevoked.png) |s
 
 ## Known limitations
 
